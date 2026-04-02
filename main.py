@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
 import random
 import json
+import os
 
 mcp=FastMCP("simple calulator server")
 
@@ -47,4 +48,6 @@ def server_info() -> str:
     return json.dumps(info, indent=2)
 
 if __name__=="__main__":
-    mcp.run(transport="http",host="0.0.0.0",port=8000)
+    port = int(os.environ.get("PORT", 8000))   # ✅ IMPORTANT
+    mcp.run(transport="http", host="0.0.0.0", port=port)
+    # mcp.run(transport="http",host="0.0.0.0",port=8000)
