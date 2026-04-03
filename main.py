@@ -13,12 +13,11 @@ from fastmcp import FastMCP
 
 mcp=FastMCP(name="Expense Tracker")
 
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 conn = psycopg2.connect(
-    host="localhost",
-    database="postgres",   # your DB name
-    user="postgres",
-    password="admin",
-    port=5432
+    DATABASE_URL,
+    sslmode="require"
 )
 
 print("Connected successfully!")
