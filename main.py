@@ -13,13 +13,14 @@ from fastmcp import FastMCP
 
 mcp=FastMCP(name="Expense Tracker")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "postgresql://postgres.edciwifsnxhqrxycvruz:Expense_trackerr@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
 
-conn = psycopg2.connect(
-    DATABASE_URL,
-    sslmode="require"
-)
-
+def get_connection():
+    return psycopg2.connect(
+        DATABASE_URL,
+        sslmode="require"
+    )
+    
 print("Connected successfully!")
 
 
@@ -28,33 +29,47 @@ category_path=os.path.join(os.path.dirname(__file__),"categories.json")
 @mcp.tool
 def add_expense(date,amount,category,subcategory="",note=""):
     """Add a new expense entry to database."""
+    conn=get_connection()
     cursor=conn.cursor()
     try:
-        cursor.execute("INSERT INTO expenses(date,amount,category,subcategory,note) VALUES(%s,%s,%s,%s,%s)",(date,amount,category,subcategory,note))
+        cursor.execute(
+    "INSERT INTO expenses(date,amount,category,subcategory,note) VALUES(%s,%s,%s,%s,%s) RETURNING id",
+    (date, amount, category, subcategory, note)
+    )
         new_id=cursor.fetchone()[0]
         conn.commit()
         return{"Status":"ok","id":new_id}
     except Exception as e:
-        return e
+        conn.rollback()
+        print("ERROR:", e)   # 👈 VERY IMPORTANT
+        return {"error": str(e)}
         
 @mcp.tool
 def list_expenses(start_date,end_date):
     """List all expenses entries from database"""
+    conn=get_connection()
     cursor=conn.cursor()
-    cursor.execute("select * from expenses where date BETWEEN %s AND %s ORDER BY id ASC",(start_date,end_date))
-    column=[d[0] for d in cursor.description]
-    rows=cursor.fetchall()
-    return[dict(zip(column,row)) for row in rows]
+    try:
+        cursor.execute("select * from expenses where date BETWEEN %s AND %s ORDER BY id ASC",(start_date,end_date))
+        column=[d[0] for d in cursor.description]
+        rows=cursor.fetchall()
+        return[dict(zip(column,row)) for row in rows]
+    except Exception as e:
+        conn.rollback()
+        return{"error":str(e)}
+    finally:
+        cursor.close()
     
 
 @mcp.tool
 def summarize(start_date,end_date,category=None):
     """This is a tool which summarizes expenses by category"""
+    conn=get_connection()
     cursor=conn.cursor()
     query=("Select category,sum(amount) as Total_amount from expenses where date BETWEEN %s AND %s")
     parameter=[start_date,end_date]
     if category:
-        query+="AND category=%s"
+        query += " AND category=%s"
         parameter.append(category)
     query+="Group by category Order by category ASC"
     
