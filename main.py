@@ -15,11 +15,10 @@ mcp=FastMCP(name="Expense Tracker")
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-conn = psycopg2.connect(
-    DATABASE_URL,
-    sslmode="require"
-)
+print("DATABASE_URL:", DATABASE_URL)   # 👈 add this
 
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set")
 print("Connected successfully!")
 
 
