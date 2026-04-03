@@ -13,14 +13,12 @@ from fastmcp import FastMCP
 
 mcp=FastMCP(name="Expense Tracker")
 
-conn = psycopg2.connect(
-    host="localhost",
-    database="postgres",   # your DB name
-    user="postgres",
-    password="admin",
-    port=5432
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
+print("DATABASE_URL:", DATABASE_URL)   # 👈 add this
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set")
 print("Connected successfully!")
 
 
